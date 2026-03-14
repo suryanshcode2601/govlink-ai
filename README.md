@@ -5,7 +5,7 @@ The system uses **AI-powered NLP classification (HuggingFace Transformers)** to 
 
 The project consists of a **React frontend**, **FastAPI backend**, and **PostgreSQL database**.
 
-# We are still working on to deploy this website as this is only a prototype
+**We are still working on to deploy this website and some of frontend features are still in development as this is only a prototype.**
 
 ## Features
 
@@ -60,6 +60,8 @@ The predicted category is automatically stored in the database and used by the t
 #  Installation Guide
 
 ## 1️⃣ Clone the Repository
+
+git clone https://github.com/harsh7217288/govlink.git
 
 # Backend Setup (FastAPI)
 
@@ -133,10 +135,10 @@ http://127.0.0.1:8000/docs
 
 ## 6️⃣ Install Dependencies
 
-Navigate to govconnect folder:
+Navigate to govlink folder:
 
 ```
-cd govconnect
+cd govlink
 ```
 
 Install packages:
