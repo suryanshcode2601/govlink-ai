@@ -5,7 +5,7 @@ The system uses **AI-powered NLP classification (HuggingFace Transformers)** to 
 
 The project consists of a **React frontend**, **FastAPI backend**, and **PostgreSQL database**.
 
----
+# We are still working on to deploy this website as this is only a prototype
 
 ## Features
 
@@ -133,10 +133,10 @@ http://127.0.0.1:8000/docs
 
 ## 6️⃣ Install Dependencies
 
-Navigate to frontend folder:
+Navigate to govconnect folder:
 
 ```
-cd frontend
+cd govconnect
 ```
 
 Install packages:
@@ -231,19 +231,18 @@ Database:
 
 ---
 
-# 📌 Future Improvements
+# Future Scope
 
-* Real-time complaint heatmap
-* Admin dashboard for issue resolution
-* Live AI classification preview while typing
-* Notification system
-* Department routing automation
+GovConnect will be expanded into a full AI-powered decision intelligence platform for civic governance.
 
----
+1. In the final version, the system will support voice, image, and text-based issue reporting, allowing citizens to submit richer evidence for complaints.
+2. Advanced AI models will perform sentiment analysis, urgency detection, and priority scoring to help leaders identify the most critical issues faster.
+3. The platform will also introduce geo-tagged evidence verification, ensuring that reports are authentic and location-validated.
+4. A dedicated leader decision dashboard will provide insights such as issue heatmaps, response trends, and department-wise performance. Additionally, an AI communication assistant will help generate transparent public updates automatically, while trust analytics will measure how effectively civic authorities respond to community concerns. These enhancements aim to transform GovConnect from a reporting tool into a data-driven governance and public trust platform.
 
 # 👨‍💻 Contributors
 
-1)Dheeraj Soni
-2)Suryansh Chandel(Leader)
-3)Harsh Choudhary
-4)Agrim Gupta
+1. Dheeraj Soni
+2. Suryansh Chandel(Leader)
+3. Harsh Choudhary
+4. Agrim Gupta
