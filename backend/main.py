@@ -72,22 +72,30 @@ from pydantic import BaseModel
 import database_models
 from database import SessionLocal, engine
 from models import Issue
-from classifier import classify_issue, calculate_urgency, classify_with_confidence
+# from classifier import classify_issue, calculate_urgency, classify_with_confidence   # 🔴 Disabled for now
 
 app = FastAPI()
 
+# ✅ Create tables (ONLY ONCE)
 database_models.Base.metadata.create_all(bind=engine)
+
+@app.get("/api/timeline")
+def get_timeline():
+    return []
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000"
-    ],
+    "http://localhost:5173",
+    "http://localhost:3000"
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+database_models.Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     db = SessionLocal()
@@ -96,18 +104,14 @@ def get_db():
     finally:
         db.close()
 
-class ClassifyRequest(BaseModel):
-    description: str
 
-@app.get("/api/timeline")
-def get_timeline():
-    return []
-
+# ✅ Get Issues
 @app.get("/api/issues")
 def get_issues(db: Session = Depends(get_db)):
     issues = db.query(database_models.Issue).all()
     return issues
 
+# ✅ Add Issue
 @app.post("/api/issues")
 def add_issue(issue: Issue, db: Session = Depends(get_db)):
     issue_type = classify_issue(issue.description)

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Plus,
   Sparkles,
   MapPin,
   FileText,
   ChevronRight,
-  Settings
+  Settings,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
@@ -15,6 +17,24 @@ import Layout from '../components/Layout';
 export default function CitizenDashboard() {
   const { issues, upvoteIssue, userSettings } = useApp();
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read category filter from URL
+  const categoryFilter = searchParams.get('category') || '';
+
+  // Filter issues by category (live as user types)
+  const filteredIssues = categoryFilter.trim()
+    ? issues.filter(issue => {
+        const q = categoryFilter.toLowerCase();
+        const category = (issue.type || '').toLowerCase();
+        const title = (issue.description || '').toLowerCase();
+        return category.includes(q) || title.includes(q);
+      })
+    : issues;
+
+  const clearFilter = () => {
+    setSearchParams({});
+  };
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
@@ -24,42 +44,72 @@ export default function CitizenDashboard() {
             {/* Hero Section */}
             <div className="relative bg-blue-600 rounded-3xl p-12 overflow-hidden flex justify-between items-center">
               <div className="relative z-10 max-w-xl space-y-6">
-                  <h2 className="text-5xl font-bold tracking-tight leading-[0.9]">Improve your city with AI</h2>
-                  <p className="text-blue-100 text-lg leading-relaxed">
-                    See a problem? Report it. Our AI handles the routing so the right department can get straight to work
-                  </p>
-                  <div className="flex gap-4">
-                    <Link to="/submit" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-colors">
-                      <Plus size={20} /> Report an Issue
-                    </Link>
-                    <button className="bg-blue-700/50 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-blue-500/30 hover:bg-blue-700/70 transition-colors">
-                      <Sparkles size={20} /> AI Assistant
-                    </button>
-                  </div>
-               </div>
-               <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-blue-500/20 flex items-center justify-center">
-                  <div className="w-48 h-48 border border-blue-400/30 rotate-45 flex items-center justify-center">
-                    <div className="w-32 h-32 border border-blue-400/30 flex items-center justify-center">
-                      <div className="w-16 h-16 border border-blue-400/30" />
-                    </div>
+                <h2 className="text-5xl font-bold tracking-tight leading-[0.9]">Improve your city with AI</h2>
+                <p className="text-blue-100 text-lg leading-relaxed">
+                  See a problem? Report it. Our AI handles the routing so the right department can get straight to work
+                </p>
+                <div className="flex gap-4">
+                  <Link to="/submit" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-colors">
+                    <Plus size={20} /> Report an Issue
+                  </Link>
+                  <button className="bg-blue-700/50 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-blue-500/30 hover:bg-blue-700/70 transition-colors">
+                    <Sparkles size={20} /> AI Assistant
+                  </button>
+                </div>
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-blue-500/20 flex items-center justify-center">
+                <div className="w-48 h-48 border border-blue-400/30 rotate-45 flex items-center justify-center">
+                  <div className="w-32 h-32 border border-blue-400/30 flex items-center justify-center">
+                    <div className="w-16 h-16 border border-blue-400/30" />
                   </div>
                 </div>
+              </div>
             </div>
 
             {/* Community Issues */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className={cn("text-2xl font-bold", !userSettings.darkMode && "text-slate-900")}>Recent Community Issues</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className={cn("text-2xl font-bold", !userSettings.darkMode && "text-slate-900")}>
+                    {categoryFilter ? `Issues: "${categoryFilter}"` : 'Recent Community Issues'}
+                  </h3>
+                  {/* Active filter badge with clear button */}
+                  {categoryFilter && (
+                    <button
+                      onClick={clearFilter}
+                      className="flex items-center gap-1.5 bg-blue-600/20 text-blue-400 text-[11px] font-bold px-3 py-1 rounded-full hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                    >
+                      {categoryFilter} <X size={12} />
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-2">
-                  <FilterButton label="All" active />
-                  <FilterButton label="Roads" />
-                  <FilterButton label="Water" />
-                  <FilterButton label="Safety" />
+                  <FilterButton label="All" active={!categoryFilter} onClick={clearFilter} />
+                  {/* Dynamically show unique categories from issues */}
+                  {Array.from(new Set(issues.map(i => i.type || 'General'))).map(cat => (
+                    <FilterButton
+                      key={cat}
+                      label={cat}
+                      active={categoryFilter.toLowerCase() === cat.toLowerCase()}
+                      onClick={() => setSearchParams({ category: cat })}
+                    />
+                  ))}
                 </div>
               </div>
 
+              {/* No results message */}
+              {filteredIssues.length === 0 && (
+                <div className={cn("rounded-2xl p-12 text-center space-y-3", userSettings.darkMode ? "bg-slate-900/50 border border-slate-800" : "bg-white border border-slate-200")}>
+                  <p className={cn("text-lg font-bold", !userSettings.darkMode && "text-slate-900")}>No issues found</p>
+                  <p className="text-slate-500 text-sm">No issues match "<span className="font-semibold">{categoryFilter}</span>"</p>
+                  <button onClick={clearFilter} className="text-blue-500 text-sm font-bold hover:text-blue-400">
+                    Clear filter
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-6">
-                {issues.map(issue => (
+                {filteredIssues.map(issue => (
                   <div key={issue.id} className={cn("glass-card p-6 space-y-4", !userSettings.darkMode && "bg-white border-slate-200 shadow-sm")}>
                     <div className="flex justify-between items-start">
                       <div className="flex gap-2">
@@ -78,7 +128,7 @@ export default function CitizenDashboard() {
 
                     <div>
                       <h4 className={cn("font-bold text-lg", !userSettings.darkMode && "text-slate-900")}>
-                          {(issue.description || "").split('.')[0]}
+                        {(issue.description || "").split('.')[0]}
                       </h4>
                       <div className="flex items-center gap-2 text-slate-500 text-xs mt-1">
                         <MapPin size={14} />
@@ -133,22 +183,22 @@ export default function CitizenDashboard() {
                     </div>
                     <div>
                       <h4 className={cn("font-bold text-lg", !userSettings.darkMode && "text-slate-900")}>
-                      {(issue.description || "").split('.')[0]}
+                        {(issue.description || "").split('.')[0]}
                       </h4>
                       <p className="text-sm text-slate-500">Reported on {new Date(issue.reported_at).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-8">
-                     <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Status</p>
-                        <span className={cn(
-                          "status-badge",
-                          issue.status === 'PENDING' ? 'status-pending' : 'status-dispatched'
-                        )}>
-                          {issue.status}
-                        </span>
-                     </div>
-                     <ChevronRight className="text-slate-700" />
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">Status</p>
+                      <span className={cn(
+                        "status-badge",
+                        issue.status === 'PENDING' ? 'status-pending' : 'status-dispatched'
+                      )}>
+                        {issue.status}
+                      </span>
+                    </div>
+                    <ChevronRight className="text-slate-700" />
                   </div>
                 </div>
               ))}
@@ -181,7 +231,6 @@ export default function CitizenDashboard() {
                 Join the Conversation
               </button>
             </div>
-            
             <div className="grid grid-cols-3 gap-6">
               {[1,2,3].map(i => (
                 <div key={i} className="glass-card aspect-video relative overflow-hidden group cursor-pointer">
@@ -200,15 +249,18 @@ export default function CitizenDashboard() {
   );
 }
 
-function FilterButton({ label, active = false }: { label: string, active?: boolean }) {
+function FilterButton({ label, active = false, onClick }: { label: string, active?: boolean, onClick: () => void }) {
   const { userSettings } = useApp();
   return (
-    <button className={cn(
-      "px-4 py-1.5 rounded-lg text-xs font-bold transition-colors",
-      active 
-        ? "bg-blue-600 text-white" 
-        : cn("text-slate-400 hover:text-slate-200", userSettings.darkMode ? "bg-slate-800" : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900")
-    )}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-4 py-1.5 rounded-lg text-xs font-bold transition-colors",
+        active 
+          ? "bg-blue-600 text-white" 
+          : cn("text-slate-400 hover:text-slate-200", userSettings.darkMode ? "bg-slate-800" : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900")
+      )}
+    >
       {label}
     </button>
   );
