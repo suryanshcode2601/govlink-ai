@@ -1,26 +1,30 @@
 import React, { useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../AppContext';
 import Layout from '../components/Layout';
 import { cn } from '../lib/utils';
-import { User, Bell, Shield, Save, Trash2, LogOut, ChevronRight } from 'lucide-react';
+import { User, Bell, Shield, Save, LogOut, ChevronRight } from 'lucide-react';
 
 export default function Settings() {
   const { userSettings, updateUserSettings } = useApp();
   const [formData, setFormData] = useState(userSettings);
   const [isSaving, setIsSaving] = useState(false);
 
-  // CHANGE: State to track which sidebar button is blue
-  const [activeSection, setActiveSection] = useState('profile');
+  // Reads ?tab=notifications from URL, defaults to 'profile'
+  const [searchParams] = useSearchParams();
+  const [activeSection, setActiveSection] = useState(
+    searchParams.get('tab') || 'profile'
+  );
 
-  // CHANGE: Refs (anchors) to identify sections for scrolling
+  // Refs (anchors) to identify sections for scrolling
   const profileRef = useRef<HTMLDivElement>(null);
   const notifyRef = useRef<HTMLDivElement>(null);
   const securityRef = useRef<HTMLDivElement>(null);
 
-  // CHANGE: Function to handle clicking sidebar buttons
+  // Function to handle clicking sidebar buttons
   const scrollToSection = (section: string, ref: React.RefObject<HTMLDivElement>) => {
-    setActiveSection(section); // Moves the blue color
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Scrolls the page
+    setActiveSection(section);
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleSave = () => {
@@ -130,7 +134,6 @@ export default function Settings() {
                   enabled={formData.notifications}
                   onChange={(val) => setFormData({ ...formData, notifications: val })}
                 />
-                {/* CHANGE: Push Notifications is now functional */}
                 <Toggle 
                   label="Push Notifications" 
                   description="Real-time alerts on your mobile device." 
@@ -140,7 +143,7 @@ export default function Settings() {
               </div>
             </section>
 
-            {/* Security Section (Danger Zone) */}
+            {/* Security Section */}
             <section ref={securityRef} className={cn("glass-card p-8 space-y-6 border-red-500/20", !userSettings.darkMode && "bg-white shadow-sm")}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">

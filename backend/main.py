@@ -14,30 +14,23 @@ from sqlalchemy.orm import Session
 import database_models
 from database import SessionLocal, engine
 from models import Issue
-from classifier import classify_issue
+# from classifier import classify_issue   # 🔴 Disabled for now
 
 app = FastAPI()
 
+# ✅ Create tables (ONLY ONCE)
 database_models.Base.metadata.create_all(bind=engine)
 
-@app.get("/api/timeline")
-def get_timeline():
-    return []
-
+# ✅ CORS FIX (allow all)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-    "http://localhost:5173",
-    "http://localhost:3000"
-],
+    allow_origins=["*"],   # 🔥 important fix
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-database_models.Base.metadata.create_all(bind=engine)
-
-
+# ✅ DB Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -45,21 +38,30 @@ def get_db():
     finally:
         db.close()
 
+# ✅ Timeline API
+@app.get("/api/timeline")
+def get_timeline():
+    return []
 
+# ✅ Get Issues
 @app.get("/api/issues")
 def get_issues(db: Session = Depends(get_db)):
     issues = db.query(database_models.Issue).all()
     return issues
 
+# ✅ Add Issue
 @app.post("/api/issues")
 def add_issue(issue: Issue, db: Session = Depends(get_db)):
 
-    # classify issue using HuggingFace model
-    issue_type = classify_issue(issue.description)
+    # 🔥 TEMP FIX (avoid classifier crash)
+    issue_type = "general"
+
+    # If you want later:
+    # issue_type = classify_issue(issue.description)
 
     new_issue = database_models.Issue(
         description=issue.description,
-        type=issue_type,   # ✅ USE THE CLASSIFIER RESULT
+        type=issue_type,
         location_name=issue.location_name,
         lat=issue.lat,
         lng=issue.lng,
