@@ -1,13 +1,3 @@
-# from sqlalchemy import Column,Integer,String
-# from sqlalchemy.ext.declarative import declarative_base
-
-# Base = declarative_base()
-# class Issue(Base):
-
-#     __tablename__ = "issue"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     description = Column(String)
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from datetime import datetime
 from database import Base
