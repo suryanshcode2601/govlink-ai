@@ -109,7 +109,7 @@ function ModalShell({
 
         {/* Footer */}
         <div className={cn("px-8 py-5 border-t flex items-center justify-between shrink-0", userSettings.darkMode ? "border-slate-800" : "border-slate-200")}>
-          <p className="text-[11px] text-slate-500">© 2024 GovConnect AI. All rights reserved.</p>
+          <p className="text-[11px] text-slate-500">© 2026 GovConnect AI. All rights reserved.</p>
           <button
             onClick={onClose}
             className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-6 py-2 rounded-xl transition-colors"
@@ -286,18 +286,38 @@ function AccessibilityModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   );
 }
 
+// ─── Footer text content map ──────────────────────────────────────────────────
+const FOOTER_TEXTS: Record<string, string> = {
+  default:     '© 2026 GovConnect AI. Your data is handled with strict governance standards.',
+  privacy:     '© 2026 GovConnect AI. We never sell your data. Encrypted in transit. You can request deletion anytime at privacy@govconnect.ai.',
+  accessibility: '© 2026 GovConnect AI. Built to WCAG 2.1 AA standards. Screen reader compatible. Keyboard navigable. Contact accessibility@govconnect.ai for help.',
+  support:     '© 2026 GovConnect AI. Support available Mon–Fri 9am–6pm. Email: support@govconnect.ai. Response within 1–2 business days.',
+};
+
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 export default function Layout({ children, activeTab, onTabChange, showTabs = true }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { issues, userSettings } = useApp();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [showDropdown, setShowDropdown]       = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal]           = useState(false);
+  const [showSupportModal, setShowSupportModal]           = useState(false);
   const [showAccessibilityModal, setShowAccessibilityModal] = useState(false);
+
+  // ── Which footer text is active: 'default' | 'privacy' | 'accessibility' | 'support'
+  const [footerText, setFooterText] = useState<keyof typeof FOOTER_TEXTS>('default');
+
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // ── Admin login state (reads from localStorage)
+  const isAdminLoggedIn = localStorage.getItem("isAdminLoggedIn") === "true";
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem("isAdminLoggedIn");
+    navigate("/");
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -317,7 +337,7 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
 
   const filteredIssues = searchQuery.trim().length === 0 ? [] : issues.filter(issue => {
     const q = searchQuery.toLowerCase();
-    const title = (issue.description || '').toLowerCase();
+    const title    = (issue.description || '').toLowerCase();
     const category = (issue.type || '').toLowerCase();
     return title.includes(q) && !category.includes(q);
   });
@@ -340,20 +360,25 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
     navigate('/');
   };
 
+  // ── Toggle footer text — clicking same link again resets to default
+  const handleFooterLink = (key: keyof typeof FOOTER_TEXTS) => {
+    setFooterText(prev => prev === key ? 'default' : key);
+  };
+
   const navItems = [
-    { icon: <LayoutDashboard size={18} />, label: 'Dashboard', path: '/' },
-    { icon: <MapIcon size={18} />, label: 'City Map', path: '/city-map' },
-    { icon: <Shield size={18} />, label: 'Transparency', path: '/transparency' },
-    { icon: <Settings size={18} />, label: 'Settings', path: '/settings' },
+    { icon: <LayoutDashboard size={18} />, label: 'Dashboard',    path: '/'            },
+    { icon: <MapIcon size={18} />,         label: 'City Map',     path: '/city-map'     },
+    { icon: <Shield size={18} />,          label: 'Transparency', path: '/transparency' },
+    { icon: <Settings size={18} />,        label: 'Settings',     path: '/settings'     },
   ];
 
   return (
     <div className={cn("flex h-screen text-slate-200 overflow-hidden transition-colors duration-300", userSettings.darkMode ? "bg-[#0a0c12]" : "bg-slate-50 text-slate-900")}>
 
-      {/* All Modals */}
-      <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
-      <SupportCenterModal isOpen={showSupportModal} onClose={() => setShowSupportModal(false)} />
-      <AccessibilityModal isOpen={showAccessibilityModal} onClose={() => setShowAccessibilityModal(false)} />
+      {/* Modals — kept exactly as before, still work normally */}
+      <PrivacyPolicyModal    isOpen={showPrivacyModal}       onClose={() => setShowPrivacyModal(false)}       />
+      <SupportCenterModal    isOpen={showSupportModal}       onClose={() => setShowSupportModal(false)}       />
+      <AccessibilityModal    isOpen={showAccessibilityModal} onClose={() => setShowAccessibilityModal(false)} />
 
       {/* Sidebar */}
       <aside className={cn("w-64 border-r flex flex-col p-6 gap-8", userSettings.darkMode ? "border-slate-800" : "border-slate-200 bg-white")}>
@@ -416,9 +441,9 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
         </div>
       </aside>
 
-      
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
+
+        {/* ─── HEADER ─── */}
         <header className={cn("h-16 border-b flex items-center justify-between px-8 shrink-0", userSettings.darkMode ? "border-slate-800" : "border-slate-200 bg-white")}>
           <div className="flex h-full items-center">
             {showTabs && onTabChange && (
@@ -444,6 +469,7 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
           </div>
 
           <div className="flex items-center gap-4">
+
             {/* Search with Dropdown */}
             <div className="relative" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4 z-10" />
@@ -532,9 +558,9 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
                               </div>
                               <span className={cn(
                                 "ml-auto text-[10px] font-bold px-2 py-0.5 rounded shrink-0",
-                                issue.status === 'PENDING' ? "bg-amber-500/10 text-amber-500" :
-                                issue.status === 'RESOLVED' ? "bg-green-500/10 text-green-500" :
-                                "bg-blue-500/10 text-blue-500"
+                                issue.status === 'PENDING'  ? "bg-amber-500/10 text-amber-500"  :
+                                issue.status === 'RESOLVED' ? "bg-green-500/10 text-green-500"  :
+                                                              "bg-blue-500/10 text-blue-500"
                               )}>
                                 {issue.status}
                               </span>
@@ -564,6 +590,26 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
             >
               <img src={`https://picsum.photos/seed/${userSettings.email}/100/100`} alt="User" referrerPolicy="no-referrer" />
             </button>
+
+            {/* ── Admin Login / Logout button */}
+            {isAdminLoggedIn ? (
+              <button
+                onClick={handleAdminLogout}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest hover:bg-red-500/20 transition"
+              >
+                <Lock size={12} />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-widest hover:bg-blue-500/20 transition"
+              >
+                <Shield size={12} />
+                Admin
+              </button>
+            )}
+
           </div>
         </header>
 
@@ -572,26 +618,59 @@ export default function Layout({ children, activeTab, onTabChange, showTabs = tr
           {children}
         </div>
 
-        {/* Footer */}
-        <footer className={cn("h-12 border-t flex items-center justify-between px-8 text-[10px] text-slate-500 font-medium shrink-0", userSettings.darkMode ? "border-slate-800" : "border-slate-200 bg-white")}>
-          <div className="flex items-center gap-2">
+        {/* ─── FOOTER ─── */}
+        <footer className={cn(
+          "h-12 border-t flex items-center justify-between px-8 text-[10px] text-slate-500 font-medium shrink-0",
+          userSettings.darkMode ? "border-slate-800" : "border-slate-200 bg-white"
+        )}>
+          {/* Left — changes text when a link is clicked */}
+          <div className="flex items-center gap-2 transition-all duration-300">
             <Shield size={12} />
-            © 2026 GovConnect AI. Your data is handled with strict governance standards.
+            <span>{FOOTER_TEXTS[footerText]}</span>
+            {/* Show a reset X when non-default text is showing */}
+            {footerText !== 'default' && (
+              <button
+                onClick={() => setFooterText('default')}
+                className="ml-1 text-slate-600 hover:text-slate-400 transition"
+                title="Reset"
+              >
+                <X size={10} />
+              </button>
+            )}
           </div>
+
+          {/* Right — links that swap the footer text */}
           <div className="flex gap-6">
-            <Link to="/admin" className="hover:text-blue-400 text-blue-500 font-bold">Admin Portal</Link>
-            {/* ✅ All three open modals */}
-            <button onClick={() => setShowPrivacyModal(true)} className="hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => handleFooterLink('privacy')}
+              className={cn(
+                "transition-colors",
+                footerText === 'privacy' ? "text-blue-400 font-bold" : "hover:text-slate-300"
+              )}
+            >
               Privacy Policy
             </button>
-            <button onClick={() => setShowAccessibilityModal(true)} className="hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => handleFooterLink('accessibility')}
+              className={cn(
+                "transition-colors",
+                footerText === 'accessibility' ? "text-blue-400 font-bold" : "hover:text-slate-300"
+              )}
+            >
               Accessibility
             </button>
-            <button onClick={() => setShowSupportModal(true)} className="hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => handleFooterLink('support')}
+              className={cn(
+                "transition-colors",
+                footerText === 'support' ? "text-blue-400 font-bold" : "hover:text-slate-300"
+              )}
+            >
               Support Center
             </button>
           </div>
         </footer>
+
       </main>
     </div>
   );

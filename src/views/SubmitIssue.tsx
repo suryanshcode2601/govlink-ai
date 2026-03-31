@@ -49,6 +49,7 @@ function ClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) =
 export default function SubmitIssue() {
   const navigate = useNavigate();
   const { refreshIssues } = useApp();
+  const [files, setFiles] = useState<File[]>([]);
 
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -192,32 +193,73 @@ export default function SubmitIssue() {
   };
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  const handleSubmit = async () => {
-    if (!description || !coords) return;
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/issues', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          description,
-          location_name: locationName,
-          lat: coords.lat,
-          lng: coords.lng,
-        }),
-      });
-      if (!response.ok) throw new Error('API request failed');
-      await refreshIssues();
-      setSubmitted(true);
-      setTimeout(() => navigate('/'), 1500);
-    } catch (err) {
-      console.error('SUBMIT ERROR:', err);
-      alert('Failed to submit. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // const handleSubmit = async () => {
+  //   if (!description || !coords) return;
+  //   setIsSubmitting(true);
+  //   try {
+  //     const response = await fetch('http://127.0.0.1:8000/api/issues', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         description,
+  //         location_name: locationName,
+  //         lat: coords.lat,
+  //         lng: coords.lng,
+  //       }),
+  //     });
+  //     if (!response.ok) throw new Error('API request failed');
+  //     await refreshIssues();
+  //     setSubmitted(true);
+  //     setTimeout(() => navigate('/'), 1500);
+  //   } catch (err) {
+  //     console.error('SUBMIT ERROR:', err);
+  //     alert('Failed to submit. Please try again.');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
+ const handleSubmit = async () => {
+  if (!description || !coords) return;
+  setIsSubmitting(true);
+  try {
+    // 1. Upload images first
+    let imagePaths = "";
+    if (files.length > 0) {
+      const formData = new FormData();
+      files.forEach(f => formData.append("files", f));
+      const uploadRes = await fetch("http://localhost:8000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      imagePaths = uploadData.paths.join(",");
+    }
+
+    // 2. Submit the issue with paths
+    const response = await fetch("http://localhost:8000/api/issues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description,
+        location_name: locationName,
+        lat: coords.lat,      // ← was just `lat` before (undefined)
+        lng: coords.lng,      // ← was just `lng` before (undefined)
+        image_paths: imagePaths,
+      }),
+    });
+
+    if (!response.ok) throw new Error('API request failed');
+    await refreshIssues();
+    setSubmitted(true);
+    setTimeout(() => navigate('/'), 1500);
+  } catch (err) {
+    console.error('SUBMIT ERROR:', err);
+    alert('Failed to submit. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0a0c12] text-slate-200 flex flex-col">
@@ -274,7 +316,7 @@ export default function SubmitIssue() {
                 </div>
               </div>
 
-              {/* Step 2 — Evidence Upload */}
+              {/* Step 2 — Evidence Upload
               <div className="glass-card p-8 space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg">2</div>
@@ -292,7 +334,69 @@ export default function SubmitIssue() {
                     Select Files
                   </button>
                 </div>
-              </div>
+              </div> */}
+
+              {/* Step 2 — Evidence Upload */}
+<div className="glass-card p-8 space-y-6">
+  <div className="flex items-center gap-4">
+    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg">2</div>
+    <h3 className="text-2xl font-bold">Evidence Upload</h3>
+  </div>
+
+  <div
+    className="border-2 border-dashed border-slate-800 rounded-2xl p-12 flex flex-col items-center justify-center gap-4 hover:border-blue-500/50 transition-colors cursor-pointer group"
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => {
+      e.preventDefault();
+      const dropped = Array.from(e.dataTransfer.files).filter(f =>
+        f.type.startsWith("image/") || f.type === "video/mp4"
+      );
+      setFiles(prev => [...prev, ...dropped]);
+    }}
+  >
+    <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center group-hover:bg-blue-600/10 transition-colors">
+      <Upload className="text-slate-500 group-hover:text-blue-500 transition-colors" />
+    </div>
+    <div className="text-center">
+      <p className="font-bold text-lg">Drag and drop photos or videos</p>
+      <p className="text-slate-500 text-sm">PNG, JPG, or MP4 up to 50MB</p>
+    </div>
+    <label className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-colors cursor-pointer">
+      Select Files
+      <input
+        type="file"
+        accept="image/png,image/jpeg,video/mp4"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const picked = Array.from(e.target.files || []);
+          setFiles(prev => [...prev, ...picked]);
+        }}
+      />
+    </label>
+  </div>
+
+  {/* Preview grid */}
+  {files.length > 0 && (
+    <div className="grid grid-cols-3 gap-3 mt-4">
+      {files.map((file, i) => (
+        <div key={i} className="relative rounded-xl overflow-hidden aspect-square bg-slate-900">
+          <img
+            src={URL.createObjectURL(file)}
+            alt={file.name}
+            className="w-full h-full object-cover"
+          />
+          <button
+            onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
+            className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
               {/* Step 3 — Location Tagging ✅ UPDATED */}
               <div className="glass-card p-8 space-y-6">
@@ -478,7 +582,7 @@ export default function SubmitIssue() {
       <footer className="h-16 border-t border-slate-800 flex items-center justify-between px-12 text-xs text-slate-500 font-medium shrink-0">
         <div className="flex items-center gap-2">
           <Shield size={14} />
-          © 2024 GovConnect Local Authority Portal
+          © 2026 GovConnect Local Authority Portal
         </div>
         <div className="flex gap-8">
           <a href="#" className="hover:text-slate-300">Privacy Policy</a>

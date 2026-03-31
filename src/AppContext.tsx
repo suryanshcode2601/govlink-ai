@@ -70,8 +70,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshIssues();
+    const interval = setInterval(refreshIssues, 10000);
+    return () => clearInterval(interval);
   }, []);
 
+  
   return (
     <AppContext.Provider value={{ 
       issues, 

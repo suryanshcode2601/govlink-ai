@@ -26,3 +26,5 @@ class Issue(Base):
     upvotes = Column(Integer, default=0)
 
     reported_at = Column(DateTime, default=datetime.utcnow)
+
+    image_paths = Column(String, default="")

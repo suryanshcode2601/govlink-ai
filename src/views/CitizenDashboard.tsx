@@ -52,9 +52,7 @@ export default function CitizenDashboard() {
                   <Link to="/submit" className="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-50 transition-colors">
                     <Plus size={20} /> Report an Issue
                   </Link>
-                  <button className="bg-blue-700/50 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-blue-500/30 hover:bg-blue-700/70 transition-colors">
-                    <Sparkles size={20} /> AI Assistant
-                  </button>
+                  
                 </div>
               </div>
               <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-blue-500/20 flex items-center justify-center">
